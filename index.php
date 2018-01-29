@@ -1,34 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>丁威的毕设</title>
-  <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.css">
+    <meta charset="utf-8">
+    <title>丁威的毕设</title>
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.css">
 </head>
 <body>
 <?php
 include 'nav.html';
 ?>
 <div class="container">
-  <div class="jumbotron">
-    <h1 class="display-3">Hello, world!</h1>
-    <p class="lead">This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>
-    <hr class="my-4">
-    <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
-    <p class="lead">
-      <a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a>
-    </p>
-  </div>
-
-  <div class="jumbotron">
-    <h1 class="display-3">Hello, world!</h1>
-    <p class="lead">This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>
-    <hr class="my-4">
-    <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
-    <p class="lead">
-      <a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a>
-    </p>
-  </div>
+    <div class="jumbotron">
+        <h1 class="display-3">Hello, world!</h1>
+        <p class="lead">这个网站是我的毕业设计。毕业设计的内容就是实现短信验证码登录、防止恶意注册制、登录异常反馈等功能。</p>
+        <hr class="my-4">
+        <p>网站源代码已上传github上。<a href="https://github.com/Ting111/MyGraduationDesign">开源地址<a></p>
+    </div>
 </div>
 </body>
 </html>
