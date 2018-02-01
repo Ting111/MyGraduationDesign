@@ -4,6 +4,86 @@
     <meta charset="utf-8">
     <title>注册</title>
     <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.css">
+    <script src="http://lib.sinaapp.com/js/jquery/2.0.2/jquery-2.0.2.min.js"></script>
+    <script>
+        var InterValObj;
+        var json;
+        var count = 300;
+        var curCount;
+        var code = "";
+        var codeLength = 6;
+        function sendMessage() {
+            curCount = count;
+            var regu =/^[1][3|4|5|7|8][0-9]{9}$/gi;
+            var re = new RegExp(regu);
+            var phone=$("#phonenum").val();
+            if (phone!="" && re.test(phone)) {
+                for (var i = 0; i < codeLength; i++) {
+                    code += parseInt(Math.random() * 9).toString();
+                }
+                $("#btnSendCode").attr("disabled", "true");
+                $("#btnSendCode").text("请在" + curCount + "秒内输入验证码");
+                InterValObj = window.setInterval(SetRemainTime, 1000);
+                json = {
+                    "phone": phone,
+                    "code":code
+                };
+                $.ajax({
+                    type: "POST",
+                    dataType: "JSON",
+                    url: 'verifyCode.php',
+                    data: json,
+                    error: function (XMLHttpRequest, textStatus, errorThrown) { },
+                    success: function (msg) { }
+                });
+            } else {
+                alert("手机号码不正确");
+            }
+            function SetRemainTime() {
+                if (curCount == 0) {
+                    window.clearInterval(InterValObj);
+                    $("#btnSendCode").removeAttr("disabled");
+                    $("#btnSendCode").text("重新发送验证码");
+                    code = "";
+                } else {
+                    curCount--;
+                    $("#btnSendCode").text("请在" + curCount + "秒内输入验证码");
+                }
+            }
+        }
+        function checkForm() {
+            if (registerForm.username.value == "") {
+                alert("请输入用户名");
+                registerForm.username.focus();
+                return false;
+            }
+            if (registerForm.password.value == "") {
+                alert("请输入密码");
+                registerForm.password.focus();
+                return false;
+            }
+            if (registerForm.password.value != registerForm.password1.value) {
+                alert("两次输入的密码不一致");
+                registerForm.password.focus();
+                return false;
+            }
+            if (registerForm.phonenum.value == "") {
+                alert("请输入手机号码");
+                registerForm.phonenum.focus();
+                return false;
+            }
+            if (registerForm.verifyCode.value == "") {
+                alert("请输入短信验证码");
+                registerForm.verifyCode.focus();
+                return false;
+            }
+            if (registerForm.verifyCode.value != code) {
+                alert("验证码错误");
+                registerForm.verifyCode.focus();
+                return false;
+            }
+        }
+    </script>
 </head>
 <body>
 <?php
@@ -12,13 +92,13 @@ include 'nav.html';
 <br><br>
 <div class="container">
     <div class="col-md-4">
-        <form method="post" name="registerForm" onsubmit="checkForm()">
+        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="post" name="registerForm" onsubmit="return checkForm()">
             <fieldset>
                 <legend>注册</legend>
                 <hr>
                 <div class="form-group">
                     <label for="username">用户名</label>
-                    <input type="password" class="form-control" id="username" name="username" placeholder="请输入用户名">
+                    <input type="text" class="form-control" id="username" name="username" placeholder="请输入用户名">
                 </div>
                 <div class="form-group">
                     <label for="password">密码</label>
@@ -29,43 +109,62 @@ include 'nav.html';
                     <input type="password" class="form-control" id="password1" name="password1" placeholder="请确认密码">
                 </div>
                 <div class="form-group">
-                    <label for="phoneNum">手机号码</label>
-                    <input type="text" class="form-control" id="phoneNum" name="phoneNum" placeholder="请输入手机号码">
+                    <label for="phonenum">手机号码</label>
+                    <input type="text" class="form-control" id="phonenum" name="phonenum" placeholder="请输入手机号码">
                 </div>
                 <div class="form-group">
                     <label for="verifyCode">短信验证码</label>
                     <input type="text" class="form-control" id="verifyCode" name="verifyCode" placeholder="请输入短信验证码"><br>
                 </div>
-                <button type="button" class="btn btn-primary" id="btn1">获取验证码</button>
+                <button type="button" class="btn btn-primary" id="btnSendCode" onclick="sendMessage()">获取验证码</button>
                 <button type="submit" class="btn btn-primary">注册</button>
+                <span><input type = "hidden" name = "hidden" value = "hidden" /></span>
             </fieldset>
         </form>
     </div>
 </div>
 <?php
-session_start();
-
+if (isset($_POST["hidden"]) && $_POST["hidden"] == "hidden") {
+    $username = $_POST["username"];
+    $password = md5($_POST["password"]);
+    $password1= md5($_POST["password1"]);
+    $phonenum = $_POST["phonenum"];
+    $verifyCode = $_POST["verifyCode"];
+    if ($password == $password1 && ($_POST['password']) != "" && $username != "" && $phonenum != "" && $verifyCode != "") {
+        $link = mysql_connect("localhost", "root", "123456789");
+        if (mysql_errno($link)) {
+            echo mysql_error();
+            exit;
+        }
+        mysql_select_db('mgd');
+        mysql_set_charset('utf-8');
+        $sql = "select username from users where username='".$username."'";
+        $result = mysql_query($sql);
+        $num = mysql_num_rows($result);
+        if ($num > 0) {
+            echo "<script>alert('用户名已存在');history.go(-1);</script>";
+        } else {
+            $sql_phone = "select phonenum from users where phonenum='".$phonenum."'";
+            $res_phone = mysql_query($sql_phone);
+            $num_phone = mysql_num_rows($res_phone);
+            if ($num_phone > 0) {
+                echo "<script>alert('该手机号码已注册');history.go(-1);</script>";
+            } else{
+                $ip = ip2long($_SERVER['REMOTE_ADDR']);
+                $sql_insert = "insert into users (username, password, phonenum, ip) values ('".$username."', '".$password."', '".$phonenum."', '".$ip."')";
+                $res_insert = mysql_query($sql_insert);
+                if ($res_insert) {
+                    echo "<script>alert('注册成功');location.href='login.php';</script>";
+                } else {
+                    echo "<script>alert('系统繁忙，请稍候');history.go(-1);</script>";
+                }
+            }     
+        }
+    }
+}
 ?>
 </body>
 <script type="text/javascript">
-    var btn1 = document.getElementById("btn1");
-    btn1.onclick = function() {
-        //短信发送程序
-        //code there...
-        btn1.disabled = true;
-        var time = 60;
-        var timer = setInterval(fun1, 1000);
-        function fun1() {
-            time--;
-            if(time>=0) {
-                btn1.innerHTML = time + "s后重新发送";
-            }else{
-                btn1.innerHTML = "重新发送验证码";
-                btn1.disabled = false;
-                clearTimeout(timer);
-                time = 60;
-            }
-        }
-    }
+
 </script>
 </html>
