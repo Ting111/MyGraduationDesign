@@ -20,13 +20,18 @@
                     <a class="nav-link" href="explanation3.php">登录异常反馈</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">其他功能</a>
+                    <a class="nav-link" href="others.php">其他功能</a>
                 </li>
             </ul>
             <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="login.php">登录</a>
-                </li>
+                <?php
+                if (isset($_SESSION["username"])) {
+                    echo "<li class=\"nav-item\"><a class=\"nav-link\" href=\"comment.php\">留言</a></li>";
+                    echo "<li class=\"nav-item\"><a class=\"nav-link\" href=\"index.php?action=logout\">退出</a></li>";
+                } else {
+                    echo "<li class=\"nav-item\"><a class=\"nav-link\" href=\"login.php\">登录</a></li>";
+                }
+                ?>
             </ul>
         </div>
     </div>

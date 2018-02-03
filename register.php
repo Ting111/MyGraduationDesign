@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<?php include 'getip.php'; ?>
 <html>
 <head>
     <meta charset="utf-8">
@@ -87,7 +88,10 @@
 </head>
 <body>
 <?php
-include 'nav.html';
+include 'nav.php';
+if (isset($_SESSION["username"])) {
+    echo "<script>alert('您已登录，无法注册');history.go(-1)</script>";
+}
 ?>
 <br><br>
 <div class="container">
@@ -113,6 +117,11 @@ include 'nav.html';
                     <input type="text" class="form-control" id="phonenum" name="phonenum" placeholder="请输入手机号码">
                 </div>
                 <div class="form-group">
+                    <label for="verifyImg">图片验证码</label>
+                    <img src="verifyImg.php" title="看不清?换一张" onclick="this.src = this.src + '?' + new Date().getTime();" align="right">
+                    <input type="text" class="form-control" id="verifyImg" name="verifyImg" placeholder="请输入图中验证码">
+                </div>
+                <div class="form-group">
                     <label for="verifyCode">短信验证码</label>
                     <input type="text" class="form-control" id="verifyCode" name="verifyCode" placeholder="请输入短信验证码"><br>
                 </div>
@@ -130,41 +139,52 @@ if (isset($_POST["hidden"]) && $_POST["hidden"] == "hidden") {
     $password1= md5($_POST["password1"]);
     $phonenum = $_POST["phonenum"];
     $verifyCode = $_POST["verifyCode"];
-    if ($password == $password1 && ($_POST['password']) != "" && $username != "" && $phonenum != "" && $verifyCode != "") {
-        $link = mysql_connect("localhost", "root", "123456789");
-        if (mysql_errno($link)) {
-            echo mysql_error();
-            exit;
-        }
-        mysql_select_db('mgd');
-        mysql_set_charset('utf-8');
-        $sql = "select username from users where username='".$username."'";
-        $result = mysql_query($sql);
-        $num = mysql_num_rows($result);
-        if ($num > 0) {
-            echo "<script>alert('用户名已存在');history.go(-1);</script>";
+    $verifyImg = $_POST["verifyImg"];
+    $user_ip = $_SESSION["ip"];
+    $user_res = file_get_contents("http://ip.taobao.com/service/getIpInfo.php?ip=$user_ip");
+    $user_res = json_decode($user_res, true);
+    $user_data = $user_res["data"];
+    $user_city = $curent_data["city"];
+    echo "ip:".$user_ip;
+    echo "<br>";
+    echo "city".$user_city;
+    if ($password == $password1 && $password != "" && $username != ""  && $phonenum != "" && $verifyCode != "") {
+        if ($verifyImg == $_SESSION["verifyImg"]) {
+            $link = mysql_connect("localhost", "root", "123456789");
+            if (mysql_errno($link)) {
+                echo mysql_error();
+                exit();
+            }
+            mysql_select_db('mgd');
+            mysql_set_charset('utf-8');
+            $sql = "select username from users where username='".$username."'";
+            $result = mysql_query($sql);
+            $num = mysql_num_rows($result);
+            if ($num > 0) {
+                echo "<script>alert('用户名已存在');history.go(-1);</script>";
+            } else {
+                $sql_phone = "select phonenum from users where phonenum='".$phonenum."'";
+                $res_phone = mysql_query($sql_phone);
+                $num_phone = mysql_num_rows($res_phone);
+                if ($num_phone > 0) {
+                    echo "<script>alert('该手机号码已注册');history.go(-1);</script>";
+                } else{
+                    $sql_insert = "insert into users (username, password, phonenum, ip, city) 
+                        values ('".$username."', '".$password."', '".$phonenum."', '".$user_ip."', '".$user_city."')";
+                    $res_insert = mysql_query($sql_insert);
+                    if ($res_insert) {
+                        echo "<script>alert('注册成功');location.href='login.php';</script>";
+                    } else {
+                        echo "<script>alert('系统繁忙，请稍候');history.go(-1);</script>";
+                    }
+                }     
+            }
         } else {
-            $sql_phone = "select phonenum from users where phonenum='".$phonenum."'";
-            $res_phone = mysql_query($sql_phone);
-            $num_phone = mysql_num_rows($res_phone);
-            if ($num_phone > 0) {
-                echo "<script>alert('该手机号码已注册');history.go(-1);</script>";
-            } else{
-                $ip = ip2long($_SERVER['REMOTE_ADDR']);
-                $sql_insert = "insert into users (username, password, phonenum, ip) values ('".$username."', '".$password."', '".$phonenum."', '".$ip."')";
-                $res_insert = mysql_query($sql_insert);
-                if ($res_insert) {
-                    echo "<script>alert('注册成功');location.href='login.php';</script>";
-                } else {
-                    echo "<script>alert('系统繁忙，请稍候');history.go(-1);</script>";
-                }
-            }     
+                echo "<script>alert('验证码错误');history.go(-1);</script>";
         }
     }
 }
 ?>
+<br><br><br><br>
 </body>
-<script type="text/javascript">
-
-</script>
 </html>
